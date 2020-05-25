@@ -13,16 +13,22 @@
 
 [string] $Global:NewProjectName        = ""         
 [string] $Global:NewProjectDescription = ""         
+# https://help.github.com/en/github/creating-cloning-and-archiving-repositories/licensing-a-repository#searching-github-by-license-type
+[string] $Global:NewProjectGPL         = ""         
 [string] $Global:ProjectType           = ""         
+
+[bool]   $Global:GitHubPrivateScope    = ""         
 
 ######################### no replacement ########################
 
+[string] $Global:Component           = "Module: AlexkUtils ( https://github.com/Alex-0293/PS-Modules ) `n       Init, finish scripts: GlobalSettings ( https://github.com/Alex-0293/GlobalSettings"
 [array]  $Global:FolderToRemove      = @("ACL",".git")
 
 $Global:ScriptParams = [PSCustomObject]@{
     Author         = $Global:ScriptAuthor 
     Ver            = $Global:ScriptVer
-    Lang           = $Global:ScriptLang 
+    Lang           = $Global:ScriptLang
+    Component      = $Global:Component 
     Date           = (Get-Date -Format $GlobalDateFormat)
     InitScriptPath = $InitScriptPath
     FinishScript   = $FinishScript

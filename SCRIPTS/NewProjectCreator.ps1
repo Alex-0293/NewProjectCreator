@@ -1,30 +1,37 @@
 <#
     .SYNOPSIS 
-        .AUTOR
+        .AUTHOR
         .DATE
         .VER
     .DESCRIPTION
     .PARAMETER
     .EXAMPLE
 #>
-Clear-Host
-$Global:ScriptName = $MyInvocation.MyCommand.Name
+$Global:ScriptInvocation = $MyInvocation
 $InitScript        = "C:\DATA\Projects\GlobalSettings\SCRIPTS\Init.ps1"
-if (. "$InitScript" -MyScriptRoot (Split-Path $PSCommandPath -Parent) -force) { exit 1 }
+if (. "$InitScript" -MyScriptRoot (Split-Path $PSCommandPath -Parent)) { exit 1 }
 
 # Error trap
 trap {
-    if ($Global:Logger) {
-       Get-ErrorReporting $_
+    if (get-module -FullyQualifiedName AlexkUtils) {
+        Get-ErrorReporting $_        
         . "$GlobalSettings\$SCRIPTSFolder\Finish.ps1" 
     }
     Else {
-        Write-Host "There is error before logging initialized." -ForegroundColor Red
-    }   
+        Write-Host "[$($MyInvocation.MyCommand.path)] There is error before logging initialized. Error [$_]" -ForegroundColor Red
+    }  
+    $Global:GlobalSettingsSuccessfullyLoaded = $false
     exit 1
 }
 ################################# Script start here #################################
-
+$Res = import-module PowerShellForGitHub -PassThru
+if (-not $res) {
+    Add-ToLog -Message "Module [PowerShellForGitHub] import unsuccessful!" -Display -Status "Error" -logFilePath $ScriptLogFilePath
+    exit 1
+}
+Else {
+    Set-GitHubConfiguration -DisableTelemetry
+}
 Function Set-Params ($ScriptParams,[string] $NewLine){
     foreach ($Key in ($ScriptParams | Get-Member -MemberType NoteProperty).Name) {
         $ReplaceString = "%$($Key)%"
@@ -44,13 +51,13 @@ if ( -not $NewProjectDescription) {
 }
 Add-ToLog -Message "Set project description to [$NewProjectDescription]." -logFilePath $ScriptLogFilePath -Display -status "info"  -Level ($ParentLevel + 1)
 
-if( -not $ProjectType ) {
+if ( -not $ProjectType ) {
     while ( ($ProjectType.ToUpper() -ne "P") -and ($ProjectType.ToUpper() -ne "S") ) {
-        $ProjectType    = Read-host -Prompt "Select project type, Project or Service [P/S]" 
+        $ProjectType = Read-Host -Prompt "Select project type, Project or Service [P/S]" 
         switch ($ProjectType.ToUpper()) {
-            "P" { $Destination= $Projects }
+            "P" { $Destination = $Projects }
             "S" { $Destination = $ProjectServices }
-            Default {}
+            Default { }
         }
     }
 }
@@ -61,7 +68,6 @@ Else {
         Default { }
     }    
 }
-
 
 #Remove-Item "$Destination\$NewProjectName" -Force -Recurse | Out-Null
 
@@ -80,31 +86,52 @@ $NewScriptFilePath = "$Destination\$NewProjectName\$SCRIPTSFolder\Script.ps1"
 $ScriptParams | Add-Member -MemberType NoteProperty -Name "Description" -Value $NewProjectDescription
 $ScriptParams | Add-Member -MemberType NoteProperty -Name "Example"     -Value "$NewProjectName.ps1"
 
-[array] $Content = Get-Content -path $NewScriptFilePath
+Add-ToLog -Message "Renaming main script [$NewScriptFilePath] to [$Destination\$NewProjectName\$SCRIPTSFolder\$NewProjectName.ps1]." -logFilePath $ScriptLogFilePath -Display -status "info"  -Level ($ParentLevel + 1)
+$RenamedScript = "$Destination\$NewProjectName\$SCRIPTSFolder\$NewProjectName.ps1"
+Rename-Item -Path $NewScriptFilePath -NewName $RenamedScript 
+
+if ($GitInit){
+    Add-ToLog -Message "Initializing git in folder [$Destination\$NewProjectName]." -logFilePath $ScriptLogFilePath -Display -status "info"  -Level ($ParentLevel + 1)
+    Set-Location "$Destination\$NewProjectName\"    
+    $Answer = Read-Host -Prompt "Add remote origin? (y/N)"
+    $ProjectURL = ""
+    if ($Answer.ToUpper() -eq "Y") {        
+        if ($Global:GitHubPrivateScope) {
+            $Res = New-GitHubRepository -RepositoryName $NewProjectName -Description $NewProjectDescription -NoWiki -NoIssues -AutoInit -LicenseTemplate $NewProjectGPL -Private
+            $ProjectURL = $Res.clone_url
+        }
+        Else {
+            $Res = New-GitHubRepository -RepositoryName $NewProjectName -Description $NewProjectDescription -NoWiki -NoIssues -AutoInit -LicenseTemplate $NewProjectGPL
+            $ProjectURL = $Res.clone_url
+        }
+        Add-ToLog -Message "Set project URL to [$ProjectURL]." -logFilePath $ScriptLogFilePath -Display -status "info"  -Level ($ParentLevel + 1)
+        $NewProjectName = (Split-Path -path $ProjectURL -Leaf).Split(".")[0]
+    }    
+}
+
+$ScriptParams | Add-Member -MemberType NoteProperty -Name "ProjectURL"  -Value "$ProjectURL"
+
+[array] $Content = Get-Content -path $RenamedScript
 [array] $NewContent = @()
 
-foreach ($Line in $Content){
+foreach ($Line in $Content) {
     $NewLine = Set-Params $ScriptParams $Line
     $NewContent += $NewLine
 }
 
 if ($NewContent) {
-    $NewContent | Out-File -FilePath $NewScriptFilePath -Encoding utf8BOM
+    $NewContent | Out-File -FilePath $RenamedScript -Encoding utf8BOM
 }
-Add-ToLog -Message "Renaming main script [$NewScriptFilePath] to [$Destination\$NewProjectName\$SCRIPTSFolder\$NewProjectName.ps1]." -logFilePath $ScriptLogFilePath -Display -status "info"  -Level ($ParentLevel + 1)
-Rename-Item -Path $NewScriptFilePath -NewName "$Destination\$NewProjectName\$SCRIPTSFolder\$NewProjectName.ps1"
 
-if ($GitInit){
-    Add-ToLog -Message "Initializing git in folder [$Destination\$NewProjectName]." -logFilePath $ScriptLogFilePath -Display -status "info"  -Level ($ParentLevel + 1)
+if ($ProjectURL){
     Set-Location "$Destination\$NewProjectName\"
+    Add-ToLog -Message "Adding git remote origin [$ProjectURL]." -logFilePath $ScriptLogFilePath -Display -status "info"  -Level ($ParentLevel + 1)
     & git.exe init
-    $Answer = Read-Host -Prompt "Add remote origin? (y/N)"
-    if ($Answer.ToUpper() -eq "Y"){
-        $Origin = Read-Host -Prompt "Enter origin URL"
-        Set-Location "$Destination\$NewProjectName\"
-        Add-ToLog -Message "Adding git remote origin [$Origin]." -logFilePath $ScriptLogFilePath -Display -status "info"  -Level ($ParentLevel + 1)
-        & git.exe " remote add origin $Origin"
-    }
+    & git.exe add .
+    & git.exe commit -m 'Creation commit.'
+    & git.exe remote add origin $ProjectURL
+    & git.exe pull origin master --allow-unrelated-histories
+    & git.exe push -u origin master
 }
 
 ################################# Script end here ###################################
