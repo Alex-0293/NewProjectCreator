@@ -18,7 +18,7 @@ trap {
         . "$GlobalSettings\$SCRIPTSFolder\Finish.ps1" 
     }
     Else {
-        Write-Host "[$($MyInvocation.MyCommand.path)] There is error before logging initialized. Error [$_]" -ForegroundColor Red
+        Write-Host "[$($MyInvocation.MyCommand.path)] There is error before logging initialized. Error: $_" -ForegroundColor Red
     }  
     $Global:GlobalSettingsSuccessfullyLoaded = $false
     exit 1
@@ -128,7 +128,7 @@ if ($ProjectURL){
     Add-ToLog -Message "Adding git remote origin [$ProjectURL]." -logFilePath $ScriptLogFilePath -Display -status "info"  -Level ($ParentLevel + 1)
     & git.exe init
     & git.exe add .
-    & git.exe commit -m 'Creation commit.'
+    & git.exe commit -m "Creation commit."
     & git.exe remote add origin $ProjectURL
     & git.exe pull origin master --allow-unrelated-histories
     & git.exe push -u origin master
