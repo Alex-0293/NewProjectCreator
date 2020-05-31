@@ -61,16 +61,16 @@ if ( -not $ProjectType ) {
     while ( ($ProjectType.ToUpper() -ne "P") -and ($ProjectType.ToUpper() -ne "S") ) {
         $ProjectType = Read-Host -Prompt "Select project type, Project or Service [P/S]" 
         switch ($ProjectType.ToUpper()) {
-            "P" { $Destination = $Projects }
-            "S" { $Destination = $ProjectServices }
+            "P" { $Destination = $Global:ProjectsFolderPath }
+            "S" { $Destination = $Global:ProjectServicesFolderPath }
             Default { }
         }
     }
 }
 Else {
     switch ($ProjectType.ToUpper()) {
-        "P" { $Destination = $Projects }
-        "S" { $Destination = $ProjectServices }
+        "P" { $Destination = $Global:ProjectsFolderPath }
+        "S" { $Destination = $Global:ProjectServicesFolderPath }
         Default { }
     }    
 }
@@ -99,7 +99,9 @@ Rename-Item -Path $NewScriptFilePath -NewName $RenamedScript
 if ($GitInit){
     Add-ToLog -Message "Initializing git in folder [$Destination\$NewProjectName]." -logFilePath $ScriptLogFilePath -Display -status "info"  -Level ($ParentLevel + 1)
     Set-Location "$Destination\$NewProjectName\"    
-    $Answer = Read-Host -Prompt "Add remote origin? (y/N)"
+    if (-not $AddRemoteOrigin) {
+        $Answer = Read-Host -Prompt "Add remote origin? (y/N)"
+    }
     $ProjectURL = ""
     if ($Answer.ToUpper() -eq "Y") {        
         if ($Global:GitHubPrivateScope) {
