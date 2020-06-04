@@ -102,7 +102,11 @@ if ($GitInit){
     if (-not $AddRemoteOrigin) {
         $Answer = Read-Host -Prompt "Add remote origin? (y/N)"
     }
+    Else {
+        $Answer = "y"
+    }
     $ProjectURL = ""
+    
     if ($Answer.ToUpper() -eq "Y") {        
         if ($Global:GitHubPrivateScope) {
             $Res = New-GitHubRepository -RepositoryName $NewProjectName -Description $NewProjectDescription -NoWiki -NoIssues -AutoInit -LicenseTemplate $NewProjectGPL -Private
