@@ -21,7 +21,7 @@ if ($LastExitCode) { exit 1 }
 trap {
     if (get-module -FullyQualifiedName AlexkUtils) {
         Get-ErrorReporting $_        
-        . "$GlobalSettings\$SCRIPTSFolder\Finish.ps1" 
+        . "$GlobalSettingsPath\$SCRIPTSFolder\Finish.ps1" 
     }
     Else {
         Write-Host "[$($MyInvocation.MyCommand.path)] There is error before logging initialized. Error: $_" -ForegroundColor Red
@@ -47,15 +47,16 @@ Function Set-Params ($ScriptParams,[string] $NewLine){
     Return $NewLine
 }
 
+$Global:ParentLevel ++
+
 if ( -not $NewProjectName) {
     $NewProjectName = Read-Host -Prompt "Input new project name"
 }
-Add-ToLog -Message "Set project name to [$NewProjectName]." -logFilePath $ScriptLogFilePath -Display -status "info"  -Level ($ParentLevel + 1)
-
+Add-ToLog -Message "Set project name to [$NewProjectName]." -logFilePath $ScriptLogFilePath -Display -status "info"  
 if ( -not $NewProjectDescription) {
     $NewProjectDescription = Read-Host -Prompt "Input new project description"
 }
-Add-ToLog -Message "Set project description to [$NewProjectDescription]." -logFilePath $ScriptLogFilePath -Display -status "info"  -Level ($ParentLevel + 1)
+Add-ToLog -Message "Set project description to [$NewProjectDescription]." -logFilePath $ScriptLogFilePath -Display -status "info"  
 
 if ( -not $ProjectType ) {
     while ( ($ProjectType.ToUpper() -ne "P") -and ($ProjectType.ToUpper() -ne "S") ) {
@@ -78,13 +79,13 @@ Else {
 #Remove-Item "$Destination\$NewProjectName" -Force -Recurse | Out-Null
 
 if (Test-path "$Destination\$NewProjectName") {
-    Add-ToLog -Message "Project folder [$Destination\$NewProjectName] is already exist!" -logFilePath $ScriptLogFilePath -Display -status "error"  -Level ($ParentLevel + 1)
+    Add-ToLog -Message "Project folder [$Destination\$NewProjectName] is already exist!" -logFilePath $ScriptLogFilePath -Display -status "error"
     throw "Project folder [$Destination\$NewProjectName] is already exist!"
 }
 Else {
-    Add-ToLog -Message "Creating project folder [$Destination\$NewProjectName]." -logFilePath $ScriptLogFilePath -Display -status "info"  -Level ($ParentLevel + 1)
+    Add-ToLog -Message "Creating project folder [$Destination\$NewProjectName]." -logFilePath $ScriptLogFilePath -Display -status "info" 
     New-Item "$Destination\$NewProjectName" -ItemType Directory | Out-Null
-    Add-ToLog -Message "Copying template data from [$TemplateProjectPath\*] to [$Destination\$NewProjectName] exclude [$($FolderToRemove -join ", ")]." -logFilePath $ScriptLogFilePath -Display -status "info"  -Level ($ParentLevel + 1)
+    Add-ToLog -Message "Copying template data from [$TemplateProjectPath\*] to [$Destination\$NewProjectName] exclude [$($FolderToRemove -join ", ")]." -logFilePath $ScriptLogFilePath -Display -status "info" 
     Copy-Item -Path (Get-Item -Path "$TemplateProjectPath\*" -Exclude $FolderToRemove).FullName -Destination "$Destination\$NewProjectName" -Recurse | Out-Null
 }
 
@@ -92,12 +93,12 @@ $NewScriptFilePath = "$Destination\$NewProjectName\$SCRIPTSFolder\Script.ps1"
 $ScriptParams | Add-Member -MemberType NoteProperty -Name "Description" -Value $NewProjectDescription
 $ScriptParams | Add-Member -MemberType NoteProperty -Name "Example"     -Value "$NewProjectName.ps1"
 
-Add-ToLog -Message "Renaming main script [$NewScriptFilePath] to [$Destination\$NewProjectName\$SCRIPTSFolder\$NewProjectName.ps1]." -logFilePath $ScriptLogFilePath -Display -status "info"  -Level ($ParentLevel + 1)
+Add-ToLog -Message "Renaming main script [$NewScriptFilePath] to [$Destination\$NewProjectName\$SCRIPTSFolder\$NewProjectName.ps1]." -logFilePath $ScriptLogFilePath -Display -status "info" 
 $RenamedScript = "$Destination\$NewProjectName\$SCRIPTSFolder\$NewProjectName.ps1"
 Rename-Item -Path $NewScriptFilePath -NewName $RenamedScript 
 
 if ($GitInit){
-    Add-ToLog -Message "Initializing git in folder [$Destination\$NewProjectName]." -logFilePath $ScriptLogFilePath -Display -status "info"  -Level ($ParentLevel + 1)
+    Add-ToLog -Message "Initializing git in folder [$Destination\$NewProjectName]." -logFilePath $ScriptLogFilePath -Display -status "info"  
     Set-Location "$Destination\$NewProjectName\"    
     if (-not $AddRemoteOrigin) {
         $Answer = Read-Host -Prompt "Add remote origin? (y/N)"
@@ -116,7 +117,7 @@ if ($GitInit){
             $Res = New-GitHubRepository -RepositoryName $NewProjectName -Description $NewProjectDescription -NoWiki -NoIssues -AutoInit -LicenseTemplate $NewProjectGPL
             $ProjectURL = $Res.clone_url
         }
-        Add-ToLog -Message "Set project URL to [$ProjectURL]." -logFilePath $ScriptLogFilePath -Display -status "info"  -Level ($ParentLevel + 1)
+        Add-ToLog -Message "Set project URL to [$ProjectURL]." -logFilePath $ScriptLogFilePath -Display -status "info" 
         $NewProjectName = (Split-Path -path $ProjectURL -Leaf).Split(".")[0]
     }    
 }
@@ -137,7 +138,7 @@ if ($NewContent) {
 
 if ($ProjectURL){
     Set-Location "$Destination\$NewProjectName\"
-    Add-ToLog -Message "Adding git remote origin [$ProjectURL]." -logFilePath $ScriptLogFilePath -Display -status "info"  -Level ($ParentLevel + 1)
+    Add-ToLog -Message "Adding git remote origin [$ProjectURL]." -logFilePath $ScriptLogFilePath -Display -status "info" 
     & git.exe init
     & git.exe add .
     & git.exe commit -m "Creation commit."
@@ -145,6 +146,6 @@ if ($ProjectURL){
     & git.exe pull origin master --allow-unrelated-histories
     & git.exe push -u origin master
 }
-
+$Global:ParentLevel --
 ################################# Script end here ###################################
-. "$GlobalSettings\$SCRIPTSFolder\Finish.ps1"
+. "$GlobalSettingsPath\$SCRIPTSFolder\Finish.ps1"

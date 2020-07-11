@@ -1,5 +1,4 @@
 # Rename this file to Settings.ps1
-# Rename this file to Settings.ps1
 ######################### value replacement #####################
 
 [string] $Global:InitScriptPath      = ""         
@@ -27,7 +26,7 @@ $Global:ScriptParams = [PSCustomObject]@{
     Author         = $Global:ScriptAuthor 
     Ver            = $Global:ScriptVer
     Lang           = $Global:ScriptLang
-    Component      = $Global:Component 
+    Component      = ""#$Global:Component 
     Date           = (Get-Date -Format $GlobalDateFormat)
     InitScriptPath = $InitScriptPath
     FinishScript   = $FinishScript
