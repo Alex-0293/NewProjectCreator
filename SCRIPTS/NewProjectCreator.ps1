@@ -59,19 +59,21 @@ if ( -not $NewProjectDescription) {
 Add-ToLog -Message "Set project description to [$NewProjectDescription]." -logFilePath $ScriptLogFilePath -Display -status "info"  
 
 if ( -not $ProjectType ) {
-    while ( ($ProjectType.ToUpper() -ne "P") -and ($ProjectType.ToUpper() -ne "S") ) {
-        $ProjectType = Read-Host -Prompt "Select project type, Project or Service [P/S]" 
+    while ( ($ProjectType.ToUpper() -ne "Project") -and ($ProjectType.ToUpper() -ne "Service" ) -and ($ProjectType.ToUpper() -ne "Other")) {
+        $ProjectType = Read-Host -Prompt "Select project type, Project or Service or Other [Project/Service/Other]" 
         switch ($ProjectType.ToUpper()) {
-            "P" { $Destination = $Global:ProjectsFolderPath }
-            "S" { $Destination = $Global:ProjectServicesFolderPath }
+            "Project" { $Destination = $Global:ProjectsFolderPath }
+            "Service" { $Destination = $Global:ProjectServicesFolderPath }
+            "Other"   { $Destination = $Global:OtherProjectsFolderPath }
             Default { }
         }
     }
 }
 Else {
     switch ($ProjectType.ToUpper()) {
-        "P" { $Destination = $Global:ProjectsFolderPath }
-        "S" { $Destination = $Global:ProjectServicesFolderPath }
+        "Project" { $Destination = $Global:ProjectsFolderPath }
+        "Service" { $Destination = $Global:ProjectServicesFolderPath }
+        "Other"   { $Destination = $Global:OtherProjectsFolderPath }
         Default { }
     }    
 }
@@ -89,9 +91,10 @@ Else {
     Copy-Item -Path (Get-Item -Path "$TemplateProjectPath\*" -Exclude $FolderToRemove).FullName -Destination "$Destination\$NewProjectName" -Recurse | Out-Null
 }
 
-$NewScriptFilePath = "$Destination\$NewProjectName\$SCRIPTSFolder\Script.ps1"
+$NewScriptFilePath = "$Destination\$NewProjectName\$SCRIPTSFolder\$($Global:TemplateScriptFileName)"
 $ScriptParams | Add-Member -MemberType NoteProperty -Name "Description" -Value $NewProjectDescription
 $ScriptParams | Add-Member -MemberType NoteProperty -Name "Example"     -Value "$NewProjectName.ps1"
+Remove-Item "$Destination\$NewProjectName\$SCRIPTSFolder\ScriptToCopy.ps1"
 
 Add-ToLog -Message "Renaming main script [$NewScriptFilePath] to [$Destination\$NewProjectName\$SCRIPTSFolder\$NewProjectName.ps1]." -logFilePath $ScriptLogFilePath -Display -status "info" 
 $RenamedScript = "$Destination\$NewProjectName\$SCRIPTSFolder\$NewProjectName.ps1"
@@ -130,6 +133,10 @@ $ScriptParams | Add-Member -MemberType NoteProperty -Name "ProjectURL"  -Value "
 foreach ($Line in $Content) {
     $NewLine = Set-Params $ScriptParams $Line
     $NewContent += $NewLine
+}
+
+if ( -not $Global:InitMermaidDiagram){
+    $NewContent.Replace($Global:MermaidDiagram, "")
 }
 
 if ($NewContent) {
