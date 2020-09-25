@@ -17,31 +17,33 @@
 [bool]   $Global:GitHubPrivateScope    = ""          
 [bool]   $Global:AddRemoteOrigin       = ""          
 [bool]   $Global:InitMermaidDiagram    = ""          
-
 ######################### no replacement ########################
 
 [string] $Global:TemplateScriptFileName = "ScriptTemplate.ps1" 
 [string] $Global:Component              = "Module: AlexkUtils                   ( https://github.com/Alex-0293/PS-Modules ) `n        Init, finish scripts: GlobalSettings ( https://github.com/Alex-0293/GlobalSettings )"
-[array]  $Global:FolderToRemove         = @("ACL", ".git")
+[array]  $Global:FolderToRemove         = @("ACL",".git")
 
-[string] $Global:MermaidDiagram         = @"
+[string] $Global:MermaidDiagram         = @'
 #################################  Mermaid diagram  #################################
+<#
 ```mermaid
 
 ```
-"@
+#>
+'@
 
 $Global:ScriptParams = [PSCustomObject]@{
     Author         = $Global:ScriptAuthor 
     Ver            = $Global:ScriptVer
     Lang           = $Global:ScriptLang
-    Component      = $Global:Component 
+    Component      = ""#$Global:Component 
     Date           = (Get-Date -Format $GlobalDateFormat)
     InitScriptPath = $InitScriptPath
     FinishScript   = $FinishScript
+    MermaidDiagram = $Global:MermaidDiagram 
 }
 
-[bool]   $Global:GitInit                    = $true
+[bool]   $Global:GitInit                         = $true
 
 [bool]  $Global:LocalSettingsSuccessfullyLoaded  = $true
 # Error trap
