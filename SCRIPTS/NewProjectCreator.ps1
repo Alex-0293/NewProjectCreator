@@ -130,14 +130,16 @@ $ScriptParams | Add-Member -MemberType NoteProperty -Name "ProjectURL"  -Value "
 [array] $Content = Get-Content -path $RenamedScript
 [array] $NewContent = @()
 
+if ( -not $Global:InitMermaidDiagram){
+    $NewContent.Replace($Global:MermaidDiagram, "")
+}
+
 foreach ($Line in $Content) {
     $NewLine = Set-Params $ScriptParams $Line
     $NewContent += $NewLine
 }
 
-if ( -not $Global:InitMermaidDiagram){
-    $NewContent.Replace($Global:MermaidDiagram, "")
-}
+
 
 if ($NewContent) {
     $NewContent | Out-File -FilePath $RenamedScript -Encoding utf8BOM
