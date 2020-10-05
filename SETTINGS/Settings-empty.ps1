@@ -1,7 +1,7 @@
 # Rename this file to Settings.ps1
 ######################### value replacement #####################
 
-[string] $Global:InitScriptPath      = ""          
+[string] $Global:InitScriptPath      = ""         
 [string] $Global:FinishScript        = ""         
 
 [string] $Global:ScriptAuthor = ""         
@@ -14,9 +14,9 @@
 [string] $Global:NewProjectGPL         = ""         
 [string] $Global:ProjectType           = ""          # Select project type [Project/Service/Other]
 
-[bool]   $Global:GitHubPrivateScope    = ""          
-[bool]   $Global:AddRemoteOrigin       = ""          
-[bool]   $Global:InitMermaidDiagram    = ""          
+[bool]   $Global:GitHubPrivateScope    = ""         
+[bool]   $Global:AddRemoteOrigin       = ""         
+[bool]   $Global:InitMermaidDiagram    = ""         
 ######################### no replacement ########################
 
 [string] $Global:TemplateScriptFileName = "ScriptTemplate.ps1" 
@@ -37,7 +37,7 @@ $Global:ScriptParams = [PSCustomObject]@{
     Ver            = $Global:ScriptVer
     Lang           = $Global:ScriptLang
     Component      = ""#$Global:Component 
-    Date           = (Get-Date -Format $GlobalDateFormat)
+    Date           = (Get-Date -Format $Global:gsGlobalDateFormat)
     InitScriptPath = $InitScriptPath
     FinishScript   = $FinishScript
     MermaidDiagram = $Global:MermaidDiagram 
